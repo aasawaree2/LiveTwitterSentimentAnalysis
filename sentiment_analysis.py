@@ -1,47 +1,26 @@
 
 # coding: utf-8
 
-# In[1]:
-
-
 # Importing Libraries
 import json  #Read json file for authentication
-import pandas as pd
-import matplotlib.pyplot as plt #plot map using plt
-from mpl_toolkits.basemap import Basemap #plt map using basemap
-import twitter #Twitter API
-from twitter import * #Twitter API
+import numpy as np #Numpy library
 import csv #Read and write CSV file
 import tweepy #Livestreaming tweepy library
-import re
+import re # Filtering the data
 import datetime as dt #Date and Time
-import time
-import os
-import sys 
+import time #Time Library
+import os # OS Library
+import sys # System Library
+from twitter import * #Twitter API
 from textblob import TextBlob #Sentiment Anaylsis
-from ipywidgets import IntProgress, HTML, VBox #Progress Bar
-from IPython.display import display # Progress Bar display
-from time import sleep #Sleep timet
-from bokeh.layouts import row, widgetbox , column
-from bokeh.models.widgets import TextInput, Button
-from bokeh.io import curdoc
-from bokeh.models import Select
-from bokeh.events import ButtonClick
-from bokeh.models import Button
-
-from bokeh.io import output_file, show
-from bokeh.models import ColumnDataSource, GMapOptions
-from bokeh.plotting import gmap
-
-import numpy as np
-
-from bokeh.palettes import Spectral5
-from bokeh.plotting import curdoc, figure
-from bokeh.models.widgets import Div
-from bokeh.plotting import figure
-
-# In[2]:
-
+from bokeh.layouts import row, widgetbox , column #Bokeh Layout Library
+from bokeh.models.widgets import TextInput, Button , Div #Bokeh Widgets
+from bokeh.io import curdoc , output_file, show # Bokeh Input/ Output
+from bokeh.models import Select #Bokeh Widgets
+from bokeh.events import ButtonClick #Bokeh Events listener
+from bokeh.models import ColumnDataSource, GMapOptions# Bokeh Model Library
+from bokeh.plotting import gmap, curdoc, figure #Bokeh Ploatting Map library
+from bokeh.palettes import Spectral5 #Bokeh Patterns Library
 
 # Loading my authentication tokens
 with open('auth_dict3.json','r') as f:
@@ -62,21 +41,13 @@ auth = OAuth(OAUTH_TOKEN, OAUTH_TOKEN_SECRET,
 # We now create the twitter search object.
 twitter = Twitter(auth=auth)
 
-
-# In[3]:
-
-
-# Create CSV File and add a header 
-with open('jinx1.csv', 'wb') as csvfile:
+# Create CSV File name "output.csv" and add a header 
+with open('output.csv', 'w') as csvfile:
     fieldnames = ["Text", "longitude" , "latitude", "sentiment"]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
 
-
-# In[4]:
-
-
-#check_sentiment function is use to check the sentiment of the tweets
+# Check_sentiment function is use to check the sentiment of the tweets (Return sentiment for the given text)
 def check_sentiment(text):
     #Sentiment Analysis on every tweets
     analysis = TextBlob(text)
@@ -92,20 +63,15 @@ def check_sentiment(text):
     
     return sentiment
 
-
-# In[5]:
-
-
+# Function for adding data in the CSV file name "output.csv"
 def add_data(Text,longitude,latitude,sentiment):
-    with open('jinx1.csv', 'ab') as csvfile:
+    with open('output.csv', 'a') as csvfile:
         fieldnames = ["Text", "longitude" , "latitude", "sentiment"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writerow({'Text': Text, 'longitude': longitude, 'latitude': latitude, 'sentiment':sentiment })
 
-
-# In[6]:
-
-
+        
+# Twitter Search function for Twitter search API and return tweets
 def tweet_search(api, query, limit, max_id, since_id, layout):
 
     total_tweets = []
@@ -117,19 +83,18 @@ def tweet_search(api, query, limit, max_id, since_id, layout):
                                     since_id=str(since_id),
                                     max_id=str(max_id-1))
 
-            #print('found ' + str(len(new_tweets)) +' tweets')
-
             if not new_tweets:
-                print('no tweets found')
                 break
             
             total_tweets.extend(new_tweets)
             max_id = new_tweets[-1].id
             
+            # Filtering the Tweets data accoeding to the coordinates
             for tweet in new_tweets:
                 if tweet._json['coordinates'] is not None:
                     text1 = tweet._json['text']
-                    #Filter tweets
+                    
+                    #Trim the feteched tweets
                     text = ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)", " ", text1).split())
                     
                     text = text.encode('ascii', 'replace') 
@@ -143,22 +108,13 @@ def tweet_search(api, query, limit, max_id, since_id, layout):
                     add_data(text,lang,lat,sentiment)
                                    
         except tweepy.TweepError:
-            layout.children[0] = display_message("Wait for 15 minutes" + '(until:', dt.datetime.now()+dt.timedelta(minutes=15), ')')
-
-            time.sleep(15*60)
+            layout.children[0] = display_message("Wait for 15 minutes due to Rate Limit exceeds. (Program will resume after 15 minutes")
+            #time.sleep(15*60)
             break 
     return total_tweets, max_id
 
-
-# In[7]:
-
-
+#Function for geting the starting and ending point of the search. (Use to find max_id and since_id for Twitter Search API)
 def get_tweet_id(api, date='', days_ago=9, query='a'):
-    ''' Function that gets the ID of a tweet. This ID can then be
-        used as a 'starting point' from which to search. The query is
-        required and has been set to a commonly used word by default.
-        The variable 'days_ago' has been initialized to the maximum
-        amount we are able to search back in time (9).'''
 
     if date:
         # return an ID from the start of the given day
@@ -175,10 +131,7 @@ def get_tweet_id(api, date='', days_ago=9, query='a'):
         # return the id of the first tweet in the list
         return tweet[0].id
 
-
-# In[8]:
-
-
+# Tweepy Live Streaming API function which will listen the live treanding tweets
 class TwitterStreamListener(tweepy.StreamListener):
     def on_status(self, status):
         self.get_tweet(status)
@@ -204,9 +157,7 @@ class TwitterStreamListener(tweepy.StreamListener):
             #inserting into CSV File
             add_data(text,longitude,latitude,sentiment)
 
-# In[12]:
-
-
+#Main function which is act as a starting point of our program.
 def main(hashtag , days , layout, button , sentiment , continent, button1):
     
     # Authentication
@@ -217,6 +168,7 @@ def main(hashtag , days , layout, button , sentiment , continent, button1):
     api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True, retry_count=10, retry_delay=5,
                      retry_errors=5)
     
+    #Setting the variables
     time_limit = 1.5
     limit = 100
     max_days_old = days
@@ -224,6 +176,7 @@ def main(hashtag , days , layout, button , sentiment , continent, button1):
         max_days_old = 1
     min_days_old = 0
     
+    # Maiking dates form which user want tweets
     if max_days_old - min_days_old == 1:
         d = dt.datetime.now() - dt.timedelta(days=min_days_old)            
         day = '{0}-{1:0>2}-{2:0>2}'.format(d.year, d.month, d.day)
@@ -237,6 +190,8 @@ def main(hashtag , days , layout, button , sentiment , continent, button1):
         day = "from " +day
         
     layout.children[0] = display_message("Fetching data "+ day +" Wait for some time" )    
+    
+    #Calling get_tweet_id function for initializing max_id and since_id 
     if min_days_old == 0:
         max_id = -1
     else:
@@ -244,14 +199,16 @@ def main(hashtag , days , layout, button , sentiment , continent, button1):
 
     since_id = get_tweet_id(api, days_ago=(max_days_old-1))
     
+    # Calling the function tweet_search till a limit of 17000
     counter = 0
-
-    while counter <= 11000:
+    max_limit = 17000
+    while (counter <= max_limit):
         tweets, max_id = tweet_search(api, hashtag, limit,
                                   max_id=max_id, since_id=since_id, layout = layout)
         counter = counter + 100
-        layout.children[0] = display_message("Total tweets fetched "+ str(counter) +" from 11000" )
+        layout.children[0] = display_message("Total tweets fetched "+ str(counter) +" from " + str(max_limit) )
     
+    # Enabled all the features for the user
     button.disabled = False
     button.button_type = "success"
     sentiment.disabled = False
@@ -260,39 +217,39 @@ def main(hashtag , days , layout, button , sentiment , continent, button1):
     button1.disabled = False
     button1.button_type = "success"
     
+    #Live streaming of Tweets
     streamListener = TwitterStreamListener()
-    #create_CVS_File()
     myStream = tweepy.Stream(auth=api.auth, listener=streamListener)
-
-    #myStream.filter(locations=[-180, -90, 180, 90], async=True)
-
     myStream.filter(track=[hashtag], async=True)
-    #csvfile.close()
+    
     layout.children[0] = display_message("Fetching real time/live tweets containing word "+ hashtag+ "\n"+" Click On Refresh Button or change the continents to view results")
 
-# In[13]:
+# Function for displaying differnt messages onto Browser
 def display_message(message):
     message_box = Div(text=message, height=50)
     return message_box
 
 #Run the main function to start the program
 def start_program():
+    
     # Set up widgets
-    text = TextInput(title="HashTag", value='HashTag')
+    text = TextInput(title="HashTag", placeholder='Write a HashTag')
    
     columns = ['Today','From yesterday','Two days ago','Three days ago','Four days ago','Five days ago','Six days ago']
     days = Select(title='Days', value='Today' , options=columns)
 
     button = Button(label="Fetch Data", button_type="success")
-    button1 = Button(label="Refresh", button_type="danger" , disabled = True)
+    button1 = Button(label="Refresh Map", button_type="danger" , disabled = True)
     
-    #def display_message(message):
     message_box = Div(text="Welcome")
-
+    
+    # Callback function for running the program when hastag requested
     def callback(event):
         if(text.value == ""):
             layout1.children[0] = display_message("HashTag should not be Empty")
             return
+        
+        # Disabled the properties for user utill data is fetched
         button.disabled = True
         button.button_type = "danger"
         sentiment.disabled = True
@@ -314,12 +271,12 @@ def start_program():
         elif(days.value == "Five days ago"):
             old = 5 
         else:
-            old = 6                 
+            old = 6
+            
+        #Calling the main function for retriving the data
         main(hashtag = text.value, days = old, layout = layout1 , button = button , sentiment = sentiment , continent = continent , button1 = button1)
        
-
-    button.on_event(ButtonClick, callback)
-    
+    # create_figure function for creating the google map onto the browser with data from output.csv
     def create_figure(event):
         conti = continent.value
         senti = sentiment.value
@@ -338,16 +295,21 @@ def start_program():
             map_options = GMapOptions(lat=-82.862752, lng=135.000000, map_type="roadmap", zoom=3)
         else:
             map_options = GMapOptions(lat=-25.274398, lng=133.775136, map_type="roadmap", zoom=3)
-
+        
+        # Calling the Google API Key for displaying google maps
         p = gmap("AIzaSyCJMprrXTtmUqciVaVgskmHxskLkVjrE6A", map_options, title="World Map" , width = 950)
+        
+        #Ploting the legends on the map
         p.circle(None,None, size=5, fill_color="green", fill_alpha=0.7, legend = "Positive")
         p.circle(None,None, size=5, fill_color="yellow", fill_alpha=0.7, legend = "Neutral")
         p.circle(None,None, size=5, fill_color="red", fill_alpha=0.7, legend = "Negative")
+        
+        # Load function for extracting data from "output.csv" file
         def load(data):
             lat = []
             lon = []
 
-            with open('jinx1.csv') as csvfile:
+            with open('output.csv') as csvfile:
                 reader = csv.DictReader(csvfile)    
                 for row in reader:
                     x = float(row["longitude"])
@@ -359,6 +321,7 @@ def start_program():
             data1 = dict(lat=lat,lon=lon)
             return data1
         
+        # pointing the data on Google Maps
         if(senti == "All"):
             source = ColumnDataSource(data=load(data="positive"))
             p.circle(x="lon", y="lat", size=8, fill_color="green", fill_alpha=1.0, source=source)
@@ -375,19 +338,22 @@ def start_program():
         else:
             source = ColumnDataSource(data=load(data="neutral"))
             p.circle(x="lon", y="lat", size=8, fill_color="yellow", fill_alpha=1.0, source=source)            
-
-
-        return p
+        
+        return p #End of function create_figure()
     
+    #update function for on_change event listener
     def update(attr, old, new):
         layout.children[1] = create_figure(event = None)
     
+    #update1 function for on_click event listener
     def update1():
         layout.children[1] = create_figure(event = None)
-        
+    
+    # Event listner for buttons
+    button.on_event(ButtonClick, callback)
     button1.on_click(update1)
     
-    #Set all Parameters
+    #Set all Parameters for dropdown menus
     columns = ["All","Positive","Neutral","Negative"]
     sentiment = Select(title='Sentiment', value='All', options=columns , disabled = True)
     sentiment.on_change('value', update)
@@ -401,9 +367,9 @@ def start_program():
     layout1 = column(display_message("Welcome"),controls)
     layout = row(layout1 , create_figure(event = None))
     
+    #Drawing widgets onto the browser
     curdoc().add_root(layout)
     curdoc().title = "World Map"
 
-# In[14]:
-
+#Starting of the Program
 start_program()
