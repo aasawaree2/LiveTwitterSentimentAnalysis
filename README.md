@@ -7,7 +7,7 @@ by searching the hashtag or word as a user input within a tweet and then doing a
 of those tweets. Later, this data is plotted on the world map representing the sentiments on different
 continents with different colors providing an overview regarding the emotions about that topic.
 
-@@Getting Started@@
+## Getting Started
 
 These instructions will help you to run software on your local machine for development and testing purposes.
 	
@@ -55,7 +55,7 @@ These instructions will help you to run software on your local machine for devel
 	   bokeh serve Group11_FinalProject.py --show
 
 
-@@Testing@@
+## Testing
 
 1) After running the program, a tab will open on your browser. You can see a Text field named Hashtag. 
    Provide a user input i.e. a trending HashTag or word ( for example - 'Avengers', 'Monday', 'championsleague' etc)
@@ -68,7 +68,7 @@ These instructions will help you to run software on your local machine for devel
    then we would have to change 'max_limit' value.
 
 
-@Functionalities@
+## Functionalities
 
 1) We provide 4 input fields and 2 buttons to the user which are as follow:
 
@@ -82,7 +82,7 @@ These instructions will help you to run software on your local machine for devel
 		       of tweets.
 
 
-@Cautions@
+## Cautions
 
 1) While running the program, 'output.csv' file will be generated. Don't open that file while software is running. 
 2) Software halts for 15 minutes when rate limit exceeds. Program will automatically resume after 15 minutes. 
@@ -90,13 +90,13 @@ These instructions will help you to run software on your local machine for devel
 3) This program takes some time depending on the value of 'max_limit' variable in the program. 
 
 
-@Built With@
+## Built With
 
-ï Jupyter notebook - Integrated Development Environment
-ï Python - Programming language
+- Jupyter notebook - Integrated Development Environment
+- Python - Programming language
 
-@Authors@
-ï Mohit Goyal
-ï Rishabh Agrawal
-ï Nishant Priyam
-ï Aasawaree Deshmukh 
+## Authors
+- Aasawaree Deshmukh 
+- Mohit Goyal
+- Rishabh Agrawal
+- Nishant Priyam
